@@ -131,7 +131,7 @@ class InvoiceTemplate(OrderedDict):
         # Try to find data for each field.
         output = {}
         output['issuer'] = self['issuer']
-        
+
         for k, v in self['fields'].items():
             if k.startswith('static_'):
                 logger.debug("field=%s | static value=%s", k, v)
@@ -160,7 +160,7 @@ class InvoiceTemplate(OrderedDict):
                     else:
                         output[k] = res_find[0]
                 else:
-                    logger.warning("regexp for field %s didn't match", k)
+                    logger.debug("regexp for field %s didn't match", k)
 
         output['currency'] = self.options['currency']
 
@@ -174,11 +174,13 @@ class InvoiceTemplate(OrderedDict):
             output[typed_field] = self.coerce_type(output[typed_field], self['types'][typed_field])
 
         # If required fields were found, return output, else log error.
-        if set(['date', 'amount', 'invoice_number', 'issuer']).issubset(output.keys()):
+        required_fields = set(['date', 'amount', 'invoice_number', 'issuer'])
+        missing_fields = required_fields - set(output.keys())
+        if not missing_fields:
             output['desc'] = 'Invoice %s from %s' % (
                 output['invoice_number'], self['issuer'])
             logger.debug(output)
             return output
         else:
-            logger.error('Unable to match some fields:', output)
+            logger.debug('Unable to match some fields: %s', missing_fields)
             return None
