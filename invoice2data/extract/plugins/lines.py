@@ -27,11 +27,13 @@ def extract(self, content, output):
     assert 'line' in self['lines'], 'Line regex missing'
 
     start = re.search(self['lines']['start'], content)
+    if start:
+        content = content[start.end():]
     end = re.search(self['lines']['end'], content)
     if not start or not end:
         logger.warning('no lines found - start %s, end %s', start, end)
         return
-    content = content[start.end():end.start()]
+    content = content[:end.start()]
     lines = []
     current_row = {}
     if 'first_line' not in self['lines'] and\
@@ -70,12 +72,13 @@ def extract(self, content, output):
                 continue
         match = re.search(self['lines']['line'], line)
         if match:
-            for field, value in match.groupdict().items():
-                current_row[field] = '%s%s%s' % (
-                    current_row.get(field, ''),
-                    current_row.get(field, '') and '\n' or '',
-                    value.strip() if value else ''
-                )
+            if current_row:
+                for field, value in match.groupdict().items():
+                    current_row[field] = '%s%s%s' % (
+                        current_row.get(field, ''),
+                        current_row.get(field, '') and '\n' or '',
+                        value.strip() if value else ''
+                    )
             continue
         logger.debug(
             'ignoring *%s* because it doesn\'t match anything', line
