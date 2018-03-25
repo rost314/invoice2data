@@ -36,6 +36,7 @@ output_mapping = {
     'none': None
     }
 
+
 def extract_data(invoicefile, templates=None, input_module=pdftotext):
     if templates is None:
         templates = read_templates()
@@ -51,10 +52,19 @@ def extract_data(invoicefile, templates=None, input_module=pdftotext):
         optimized_str = t.prepare_input(extracted_str)
 
         if t.matches_input(optimized_str):
-            return t.extract(optimized_str)
+            if 'split_invoices_on' in t.options:
+                result_list = []
+                for x in [t.extract(s) for s in optimized_str.split(t.options['split_invoices_on'])]:
+                    if x:
+                        x['file'] = os.path.basename(invoicefile)
+                        result_list.append(x)
+                return result_list
+            else:
+                return t.extract(optimized_str)
 
     logger.error('No template for %s', invoicefile)
     return False
+
 
 def create_parser():
     '''Returns argument parser '''
@@ -63,7 +73,6 @@ def create_parser():
 
     parser.add_argument('--input-reader', choices=input_mapping.keys(),
                         default='pdftotext', help='Choose text extraction function. Default: pdftotext')
-
 
     parser.add_argument('--output-format', choices=output_mapping.keys(),
                         default='none', help='Choose output format. Default: none')
@@ -87,6 +96,7 @@ def create_parser():
                         help='File or directory to analyze.')
 
     return parser
+
 
 def main(args=None):
     '''Take folder or single file and analyze each.'''
@@ -116,6 +126,7 @@ def main(args=None):
     for f in args.input_files:
         res = extract_data(f.name, templates=templates, input_module=input_module)
         if res:
+            logger.info(f.name)
             logger.info(res)
             output.append(res)
             if args.copy:
@@ -126,6 +137,7 @@ def main(args=None):
 
     if output_module is not None:
         output_module.write_to_file(output, args.output_name)
+    return output
 
 if __name__ == '__main__':
     main()
