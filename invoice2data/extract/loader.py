@@ -45,7 +45,8 @@ def read_templates(folder=None):
     for path, subdirs, files in os.walk(folder):
         for name in sorted(files):
             if name.endswith('.yml'):
-                encoding = chardet.detect(open(os.path.join(path, name), 'rb').read())['encoding']
+                # encoding = chardet.detect(open(os.path.join(path, name), 'rb').read())['encoding']
+                encoding = 'utf-8'
                 logger.info(f'detected {encoding} encoding for template {name}')
                 with codecs.open(os.path.join(path, name), encoding=encoding) as template_file:
                     tpl = ordered_load(template_file.read())
