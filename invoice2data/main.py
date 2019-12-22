@@ -134,6 +134,8 @@ def main(args=None):
                     date=res['date'].strftime('%Y-%m-%d'),
                     desc=res['desc'])
                 shutil.copyfile(f.name, join(args.copy, filename))
+        else:
+            logger.warning(f'no date extracted from file: {f.name}')
 
     if output_module is not None:
         output_module.write_to_file(output, args.output_name)
